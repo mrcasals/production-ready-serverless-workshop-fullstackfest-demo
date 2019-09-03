@@ -6,6 +6,7 @@ custom:
 
 plugins:
   - serverless-pseudo-parameters
+  - serverless-iam-roles-per-function
 
 provider:
   name: aws
@@ -14,24 +15,6 @@ provider:
   region: eu-west-1
   tags:
     TEAM: test
-
-  iamRoleStatements:
-    - Effect: Allow
-      Action: dynamodb:scan
-      Resource:
-        Fn::GetAtt:
-          - restaurantsTable
-          - Arn
-    - Effect: Allow
-      Action: kinesis:PutRecord
-      Resource:
-        Fn::GetAtt:
-          - orderEventsStream
-          - Arn
-    - Effect: Allow
-      Action: sns:Publish
-      Resource:
-        Ref: restaurantNotificationTopic
 
 functions:
   get-index:
@@ -63,6 +46,13 @@ functions:
     environment:
       restaurants_table:
         Ref: restaurantsTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:scan
+        Resource:
+          Fn::GetAtt:
+            - restaurantsTable
+            - Arn
 
   search-restaurants:
     handler: functions/search-restaurants.handler
@@ -73,6 +63,13 @@ functions:
     environment:
       restaurants_table:
         Ref: restaurantsTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:scan
+        Resource:
+          Fn::GetAtt:
+            - restaurantsTable
+            - Arn
 
   place-order:
     handler: functions/place-order.handler
@@ -83,6 +80,13 @@ functions:
     environment:
       order_events_stream:
         Ref: orderEventsStream
+    iamRoleStatements:
+      - Effect: Allow
+        Action: kinesis:PutRecord
+        Resource:
+          Fn::GetAtt:
+            - orderEventsStream
+            - Arn
 
   notify-restaurant:
     handler: functions/notify-restaurant.handler
@@ -98,6 +102,17 @@ functions:
         Ref: orderEventsStream
       restaurant_notification_topic:
         Ref: restaurantNotificationTopic
+    iamRoleStatements:
+      - Effect: Allow
+        Action: kinesis:PutRecord
+        Resource:
+          Fn::GetAtt:
+            - orderEventsStream
+            - Arn
+      - Effect: Allow
+        Action: sns:Publish
+        Resource:
+          Ref: restaurantNotificationTopic
 
 resources:
   Resources:
