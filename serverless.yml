@@ -3,6 +3,10 @@ service: workshop-${self:custom.name}
 custom:
   name: mrcasals
   email: test@example.com
+  stage: ${opt:stage, self:provider.stage}
+  logLevel:
+    prod: INFO
+    default: DEBUG
 
 plugins:
   - serverless-pseudo-parameters
@@ -15,6 +19,8 @@ provider:
   region: eu-west-1
   tags:
     TEAM: test
+  environment:
+    LOG_LEVEL: ${self:custom.logLevel.${self:custom.stage}, self:custom.logLevel.default}
 
 functions:
   get-index:
