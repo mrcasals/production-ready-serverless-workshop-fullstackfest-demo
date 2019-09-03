@@ -7,6 +7,7 @@ const https = process.env.LAMBDA_RUNTIME_DIR
 const URL = require('url')
 const Log = require('@dazn/lambda-powertools-logger')
 const wrap = require('@dazn/lambda-powertools-pattern-basic')
+const CorrelationIds = require('@dazn/lambda-powertools-correlation-ids')
 
 const restaurantsApiRoot = process.env.restaurants_api
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -32,7 +33,8 @@ const getRestaurants = () => {
       hostname: hostname,
       port: 443,
       path: pathname,
-      method: 'GET'
+      method: 'GET',
+      headers: Object.assign({}, CorrelationIds.get())
     }
 
     const req = https.request(options, res => {
