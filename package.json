@@ -24,6 +24,7 @@
     "@dazn/lambda-powertools-logger": "^1.9.0",
     "@dazn/lambda-powertools-pattern-basic": "^1.10.0",
     "aws-sdk": "^2.508.0",
+    "aws-xray-sdk-core": "^2.3.5",
     "aws4": "^1.7.0",
     "awscred": "^1.4.1",
     "bluebird": "^3.5.1",

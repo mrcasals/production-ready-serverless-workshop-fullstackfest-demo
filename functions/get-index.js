@@ -1,6 +1,10 @@
 const fs = require("fs")
 const Mustache = require('mustache')
-const http = require('superagent-promise')(require('superagent'), Promise)
+const AWSXRay = require('aws-xray-sdk-core')
+const https = process.env.LAMBDA_RUNTIME_DIR
+  ? AWSXRay.captureHTTPs(require('https'))
+  : require('https')
+const URL = require('url')
 const Log = require('@dazn/lambda-powertools-logger')
 const wrap = require('@dazn/lambda-powertools-pattern-basic')
 
@@ -20,9 +24,28 @@ function loadHtml() {
   return html
 }
 
-const getRestaurants = async () => {
-  const httpReq = http.get(restaurantsApiRoot)
-  return (await httpReq).body
+const getRestaurants = () => {
+  const { hostname, pathname } = URL.parse(restaurantsApiRoot)
+
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: hostname,
+      port: 443,
+      path: pathname,
+      method: 'GET'
+    }
+
+    const req = https.request(options, res => {
+      res.on('data', buffer => {
+        const body = buffer.toString('utf8')
+        resolve(JSON.parse(body))
+      })
+    })
+
+    req.on('error', err => reject(err))
+
+    req.end()
+  })
 }
 
 module.exports.handler = wrap(async (event, context) => {
