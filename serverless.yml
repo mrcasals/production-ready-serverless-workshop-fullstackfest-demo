@@ -1,8 +1,8 @@
 service: workshop-${self:custom.name}
 
 custom:
-  name: <INSERT NAME HERE>
-  email: <INSERT EMAIL HERE>
+  name: mrcasals
+  email: test@example.com
 
 plugins:
   - serverless-pseudo-parameters
@@ -24,13 +24,13 @@ provider:
           - Arn
     - Effect: Allow
       Action: kinesis:PutRecord
-      Resource: 
+      Resource:
         Fn::GetAtt:
           - orderEventsStream
           - Arn
     - Effect: Allow
       Action: sns:Publish
-      Resource: 
+      Resource:
         Ref: restaurantNotificationTopic
 
 functions:
@@ -41,13 +41,13 @@ functions:
           path: /
           method: get
     environment:
-      restaurants_api: 
+      restaurants_api:
         Fn::Join:
           - ''
           - - "https://"
             - Ref: ApiGatewayRestApi
             - ".execute-api.#{AWS::Region}.amazonaws.com/${self:provider.stage}/restaurants"
-      orders_api: 
+      orders_api:
         Fn::Join:
           - ''
           - - "https://"
@@ -59,9 +59,9 @@ functions:
     events:
       - http:
           path: /restaurants/
-          method: get          
+          method: get
     environment:
-      restaurants_table: 
+      restaurants_table:
         Ref: restaurantsTable
 
   search-restaurants:
@@ -81,7 +81,7 @@ functions:
           path: /orders
           method: post
     environment:
-      order_events_stream: 
+      order_events_stream:
         Ref: orderEventsStream
 
   notify-restaurant:
@@ -89,14 +89,14 @@ functions:
     events:
       - stream:
           type: kinesis
-          arn: 
+          arn:
             Fn::GetAtt:
               - orderEventsStream
               - Arn
     environment:
       order_events_stream:
         Ref: orderEventsStream
-      restaurant_notification_topic: 
+      restaurant_notification_topic:
         Ref: restaurantNotificationTopic
 
 resources:
@@ -104,7 +104,7 @@ resources:
     restaurantsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: restaurants-${self:provider.stage}-${self:custom.name}
+        TableName: ${ssm:/${self:service}/${self:provider.stage}/table_name}
         AttributeDefinitions:
           - AttributeName: name
             AttributeType: S
@@ -117,21 +117,20 @@ resources:
 
     orderEventsStream:
       Type: AWS::Kinesis::Stream
-      Properties: 
-        Name: orders-${self:provider.stage}-${self:custom.name}
-        # Name: ${ssm:/workshop-${self:custom.name}/dev/stream_name}
+      Properties:
+        Name: ${ssm:/workshop-${self:custom.name}/dev/stream_name}
         ShardCount: 1
 
     restaurantNotificationTopic:
       Type: AWS::SNS::Topic
-      Properties: 
-        DisplayName: restaurants-${self:provider.stage}-${self:custom.name}
-        TopicName: restaurants-${self:provider.stage}-${self:custom.name}
+      Properties:
+        DisplayName: ${ssm:/${self:service}/${self:provider.stage}/restaurant_topic_name}
+        TopicName: ${ssm:/${self:service}/${self:provider.stage}/restaurant_topic_name}
 
     mySubscription:
       Type: AWS::SNS::Subscription
       Properties:
         Endpoint: ${self:custom.email}
         Protocol: email
-        TopicArn: 
-          Ref: restaurantNotificationTopic            
+        TopicArn:
+          Ref: restaurantNotificationTopic
